@@ -4,7 +4,6 @@
 ## TODO
     - add more test;
     - extend config with lint command
-    - replace CALC function with more robust solution
     - add pre commit hooks
 
 This project was bootstrapped with
@@ -21,6 +20,8 @@ Runs the app in the development mode.<br /> Open
 
 The page will reload if you make edits.<br /> You will also see any lint errors
 in the console.
+
+make sure you have running history API https://github.com/LazarevAndrew/calculator-api
 
 ### `yarn test`
 

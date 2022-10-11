@@ -1,5 +1,4 @@
-export const calculate = (calc: string): string => {
-    // eslint-disable-next-line no-eval
-    let result = eval(calc);
-    return String(Math.round((Number(result) + Number.EPSILON) * 100) / 100);
-}
+import { evaluate } from 'mathjs'
+
+  
+export const calculate = (calc: string): string => evaluate(calc);
