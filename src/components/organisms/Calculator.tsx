@@ -1,15 +1,15 @@
 import { Box, Center } from "@chakra-ui/react";
-import { createContext, Dispatch, SetStateAction, useContext, useState } from "react";
+import { createContext, Dispatch, SetStateAction, useContext, useEffect, useState } from "react";
 import CalculatorHistory from "../molecules/CalculatorHistory";
 import CalculatorInput from "../molecules/CalculatorInput";
 import CalculatorOutput from "../molecules/CalculatorOutput";
 
 export enum CalculationStatus {
-    SUCCESS,
-    ERROR
+    SUCCESS = 'SUCCESS',
+    ERROR = 'ERROR'
 };
 
-interface Calculation {
+export interface Calculation {
     calc: string;
     status: CalculationStatus
 }
@@ -53,6 +53,12 @@ export default function Calculator() {
   const [historyActive, setHistoryActive] = useState(initialCalculatorCtx.historyActive);
   const [history, setHistory] = useState(initialCalculatorCtx.history);
 
+  useEffect(() => {
+    fetch('/history')
+        .then(response => response.json())
+        .then(data => setHistory(data));
+}, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -74,6 +80,7 @@ export default function Calculator() {
       >
         <Box
           w="300px"
+          h="340px"
           boxShadow="0px 0px 100px -15px grey"
           bg="grey"
         >

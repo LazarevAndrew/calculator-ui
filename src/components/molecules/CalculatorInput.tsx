@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { SimpleGrid } from "@chakra-ui/react";
 
-import { CalculationStatus, useAppContext } from "../organisms/Calculator";
+import { Calculation, CalculationStatus, useAppContext } from "../organisms/Calculator";
 import CalculatorButton from "../atoms/CalculatorButton";
 
 export default function CalculatorInput() {
@@ -22,29 +22,53 @@ export default function CalculatorInput() {
       );
       const inputButtons = useMemo(
         () =>
-            [ ...Array(10).keys(), '.', '=']
-            .map((i) => ({value: String(i)})),
+            Array.from(Array(10).keys())
+            .map((i) => ({value: String(i)})).concat([{value: '.'}, {value: '='}]),
         []
       );
 
-      const evaluateCalculation = (calc: string) => {
+      const evaluateCalculation = useCallback(
+        (calc: string) => {
+            try {
+                // eslint-disable-next-line no-eval
+                let result = eval(calc);
+                result = Math.round((Number(result) + Number.EPSILON) * 100) / 100;
+          
+                const successResult = { calc: `${calc}=${result}`, status: CalculationStatus.SUCCESS };
+    
+                setHistory([...history, successResult]);
+                postCalculation(successResult)
+                return result
+            }
+            catch (error) {
+                const errorResult =  { calc, status: CalculationStatus.ERROR };
+                setHistory([...history, errorResult]);
+                postCalculation(errorResult)
+                return "Try again..."
+            }
+        },
+        [history, setHistory],
+      );
+
+      /* 
+        logs a calculations, does not affect UI behaviour
+      */
+      async function postCalculation(calculation: Calculation): Promise<void> {
         try {
-            let result = eval(calc);
-            result = Math.round((Number(result) + Number.EPSILON) * 100) / 100;
-      
-            const historyResult = { calc: `${calc}=${result}`, status: CalculationStatus.SUCCESS };
-            if (history.length < 6) {
-                setHistory([...history, historyResult]);
-              } else {
-                const [, ...newHistory] = history;
-                setHistory([...newHistory, historyResult]);
+            const response = await fetch('/history', {
+                method: "post",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(calculation),
+              });
+              if(response.status !== 201) {
+                throw new Error()
               }
-            return result
+              console.log(`${calculation.calc} has been saved`)
+        } catch(error) {
+            console.error(`${calculation.calc} has not been saved`)
         }
-        catch (error) {
-            setHistory([...history, { calc, status: CalculationStatus.ERROR }]);
-            return "Try again..."
-        };
       }
       const updateCalculation = useCallback(
         (currentCalculation: string, pressedBtn: string) => {
@@ -68,7 +92,7 @@ export default function CalculatorInput() {
               break;
           }
         },
-        [isResult, setIsResult, setCalculation]
+        [isResult, setIsResult, setCalculation, evaluateCalculation]
       );
       return (
         <>
@@ -80,7 +104,7 @@ export default function CalculatorInput() {
                 }
                 backgroundColor="cornflowerblue"
                 value={btn.value}
-                index={i}
+                key={i}
             />
         )
          )}
@@ -93,7 +117,7 @@ export default function CalculatorInput() {
               }
               backgroundColor="navajowhite"
               value={btn.value}
-              index={i}
+              key={i}
             />
             )
           )}
