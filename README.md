@@ -1,6 +1,12 @@
 # Calculator UI
 ![DEMO](calculator-demo.png)
 
+## TODO
+    - add more test;
+    - extend config with lint command
+    - replace CALC function with more robust solution
+    - add pre commit hooks
+
 This project was bootstrapped with
 [Create React App](https://github.com/facebook/create-react-app).
 
