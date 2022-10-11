@@ -1,8 +1,10 @@
-import { useCallback, useMemo } from "react";
+import * as React from "react";
 import { SimpleGrid } from "@chakra-ui/react";
 
 import { Calculation, CalculationStatus, useAppContext } from "../organisms/Calculator";
 import CalculatorButton from "../atoms/CalculatorButton";
+import { calculate } from "../../utils/calcUtils";
+import { calcButtons, inputButtons } from "../../config/calculatorConfig";
 
 export default function CalculatorInput() {
     const {
@@ -14,46 +16,27 @@ export default function CalculatorInput() {
         setHistory
       } = useAppContext();
 
-      const calcButtons = useMemo(
-        () =>
-            ['-', '*', '/', '+', 'DEL']
-            .map((i) => ({value: String(i)})),
-        []
-      );
-      const inputButtons = useMemo(
-        () =>
-            Array.from(Array(10).keys())
-            .map((i) => ({value: String(i)})).concat([{value: '.'}, {value: '='}]),
-        []
-      );
+      const evaluateCalculation = (calc: string) => {
+        try {
+          let result = calculate(calc);
+          const successResult = { calc: `${calc}=${result}`, status: CalculationStatus.SUCCESS };
 
-      const evaluateCalculation = useCallback(
-        (calc: string) => {
-            try {
-                // eslint-disable-next-line no-eval
-                let result = eval(calc);
-                result = Math.round((Number(result) + Number.EPSILON) * 100) / 100;
-          
-                const successResult = { calc: `${calc}=${result}`, status: CalculationStatus.SUCCESS };
-    
-                setHistory([...history, successResult]);
-                postCalculation(successResult)
-                return result
-            }
-            catch (error) {
-                const errorResult =  { calc, status: CalculationStatus.ERROR };
-                setHistory([...history, errorResult]);
-                postCalculation(errorResult)
-                return "Try again..."
-            }
-        },
-        [history, setHistory],
-      );
+          setHistory([...history, successResult]);
+          postCalculation(successResult)
+          return result
+      } catch (error) {
+          const errorResult =  { calc, status: CalculationStatus.ERROR };
+          setHistory([...history, errorResult]);
+          postCalculation(errorResult)
+          return "Try again..."
+        }
+      }
 
       /* 
         logs a calculations, does not affect UI behaviour
       */
-      async function postCalculation(calculation: Calculation): Promise<void> {
+      /*TODO move to hooks */
+      const postCalculation = async (calculation: Calculation) => {
         try {
             const response = await fetch('/history', {
                 method: "post",
@@ -70,8 +53,8 @@ export default function CalculatorInput() {
             console.error(`${calculation.calc} has not been saved`)
         }
       }
-      const updateCalculation = useCallback(
-        (currentCalculation: string, pressedBtn: string) => {
+
+      const updateCalculation = (currentCalculation: string, pressedBtn: string) => {
           switch (pressedBtn) {
             case "DEL":
               setCalculation("");
@@ -91,37 +74,36 @@ export default function CalculatorInput() {
               }
               break;
           }
-        },
-        [isResult, setIsResult, setCalculation, evaluateCalculation]
-      );
+      }
+
       return (
         <>
-        <SimpleGrid columns={5} >
-         {calcButtons.map((btn, i) => (
-            <CalculatorButton 
+          <SimpleGrid columns={5} >
+          {calcButtons.map((btn, i) => (
+              <CalculatorButton 
+                  onClick={() =>
+                  updateCalculation(currentCalculation, btn.value)
+                  }
+                  backgroundColor="cornflowerblue"
+                  value={btn.value}
+                  key={i}
+              />
+          )
+          )}
+          </SimpleGrid>
+          <SimpleGrid columns={3}>
+            {inputButtons.map((btn, i) => (
+              <CalculatorButton 
                 onClick={() =>
-                updateCalculation(currentCalculation, btn.value)
+                  updateCalculation(currentCalculation, btn.value)
                 }
-                backgroundColor="cornflowerblue"
+                backgroundColor="navajowhite"
                 value={btn.value}
                 key={i}
-            />
-        )
-         )}
-        </SimpleGrid>
-        <SimpleGrid columns={3}>
-          {inputButtons.map((btn, i) => (
-            <CalculatorButton 
-              onClick={() =>
-                updateCalculation(currentCalculation, btn.value)
-              }
-              backgroundColor="navajowhite"
-              value={btn.value}
-              key={i}
-            />
-            )
-          )}
-        </SimpleGrid>
+              />
+              )
+            )}
+          </SimpleGrid>
         </>
       );
 }
